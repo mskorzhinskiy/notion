@@ -595,6 +595,10 @@ const char *region_displayname(WRegion *reg)
 {
     const char *ret=NULL;
     CALL_DYN_RET(ret, const char *, region_displayname, reg, (reg));
+
+    if (strncmp("Plasma", ret, strlen("Plasma")) == 0)
+        return "";
+
     return ret;
 }
 
