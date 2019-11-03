@@ -36,8 +36,11 @@ static Atom atom_net_wm_allowed_actions=0;
 static Atom atom_net_wm_moveresize=0;
 static Atom atom_net_wm_window_type=0;
 static Atom atom_net_wm_window_type_dialog=0;
+static Atom atom_net_wm_number_of_desktops=0;
+static Atom atom_net_wm_current_desktop=0;
+static Atom atom_net_wm_desktop_names=0;
 
-#define N_NETWM 9
+#define N_NETWM 12
 
 static Atom atom_net_supported=0;
 
@@ -65,6 +68,9 @@ void netwm_init()
     atom_net_wm_moveresize=XInternAtom(ioncore_g.dpy, "_NET_WM_MOVERESIZE", False);
     atom_net_wm_window_type=XInternAtom(ioncore_g.dpy, "_NET_WM_WINDOW_TYPE", False);
     atom_net_wm_window_type_dialog=XInternAtom(ioncore_g.dpy, "_NET_WM_WINDOW_TYPE_DIALOG", False);
+    atom_net_wm_number_of_desktops=XInternAtom(ioncore_g.dpy, "_NET_NUMBER_OF_DESKTOPS", False);
+    atom_net_wm_current_desktop=XInternAtom(ioncore_g.dpy, "_NET_CURRENT_DESKTOP", False);
+    atom_net_wm_desktop_names=XInternAtom(ioncore_g.dpy, "_NET_DESKTOP_NAMES", False);
 }
 
 
@@ -82,6 +88,9 @@ void netwm_init_rootwin(WRootWin *rw)
     atoms[6]=atom_net_active_window;
     atoms[7]=atom_net_wm_allowed_actions;
     atoms[8]=atom_net_wm_moveresize;
+    atoms[9]=atom_net_wm_number_of_desktops;
+    atoms[10]=atom_net_wm_current_desktop;
+    atoms[11]=atom_net_wm_desktop_names;
 
     XChangeProperty(ioncore_g.dpy, WROOTWIN_ROOT(rw),
                     atom_net_supporting_wm_check, XA_WINDOW,
@@ -99,6 +108,8 @@ void netwm_init_rootwin(WRootWin *rw)
      * so we'll just have to guess it makes sense in the current locale charset
      */
     xwindow_set_utf8_property(rw->dummy_win, atom_net_wm_name, p, 1);
+
+    netwm_set_current_desktop(rw, "?", "None");
 }
 
 
@@ -260,6 +271,38 @@ static void netwm_active_window_rq(WClientWin *cwin,
 
 /*}}}*/
 
+/*{{{ _NET_WM_NAME */
+void netwm_set_current_desktop(WRootWin *rw,
+                               char* activity,
+                               char* name)
+{
+    CARD32 desktops[1] = {2};
+    CARD32 current[1]  = {1};
+    int length  = strlen(activity) + strlen(name) + 2;
+    char names[length];
+    int cp = 0;
+
+    for (size_t i = 0; i < strlen(activity) + 1; i++) {
+        names[cp++] = activity[i];
+    }
+    for (size_t i = 0; i < strlen(name) + 1; i++) {
+        names[cp++] = name[i];
+    }
+
+    XChangeProperty(ioncore_g.dpy, WROOTWIN_ROOT(rw),
+                    atom_net_wm_number_of_desktops, XA_CARDINAL,
+                    32, PropModeReplace, (uchar*) desktops, 1);
+
+    XChangeProperty(ioncore_g.dpy, WROOTWIN_ROOT(rw),
+                    atom_net_wm_current_desktop, XA_CARDINAL,
+                    32, PropModeReplace, (uchar*) current, 1);
+
+    XChangeProperty(ioncore_g.dpy, WROOTWIN_ROOT(rw),
+                    atom_net_wm_desktop_names,
+                    XInternAtom(ioncore_g.dpy, "UTF8_STRING", 0),
+                    8, PropModeReplace, (uchar*) names, length);
+}
+/*}}}*/
 
 /*{{{ _NET_WM_NAME */
 

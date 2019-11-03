@@ -171,6 +171,23 @@ static bool screen_handle_drop(WScreen *scr, int x, int y, WRegion *dropped)
 
 /*{{{ Region dynfun implementations */
 
+static void screen_set_desktop(char *name)
+{
+    WRootWin *rootwin;
+    int length = strlen(name);
+    char act[length];
+    char dnm[length];
+    int ret;
+
+    ret = sscanf(name, "%[a-zA-Z0-9]-%s", act, dnm);
+    if (ret != 2) {
+        FOR_ALL_ROOTWINS(rootwin)
+            netwm_set_current_desktop(rootwin, "?", name);
+    } else {
+        FOR_ALL_ROOTWINS(rootwin)
+            netwm_set_current_desktop(rootwin, act, dnm);
+    }
+}
 
 static void screen_managed_changed(WScreen *scr, int mode, bool sw,
                                    WRegion *reg_)
@@ -179,6 +196,7 @@ static void screen_managed_changed(WScreen *scr, int mode, bool sw,
         return;
 
     if(sw && scr->atom_workspace!=None){
+        WRootWin *rootwin;
         WRegion *reg=mplex_mx_current(&(scr->mplex));
         const char *n=NULL;
 
@@ -188,6 +206,13 @@ static void screen_managed_changed(WScreen *scr, int mode, bool sw,
         xwindow_set_string_property(region_root_of((WRegion*)scr),
                                     scr->atom_workspace,
                                     n==NULL ? "" : n);
+
+        if (n == NULL) {
+            FOR_ALL_ROOTWINS(rootwin)
+                netwm_set_current_desktop(rootwin, "?", n==NULL ? "" : n);
+        } else {
+            screen_set_desktop(n);
+        }
     }
 
     if(region_is_activity_r((WRegion*)scr))

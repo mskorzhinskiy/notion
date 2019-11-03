@@ -26,6 +26,8 @@ extern void netwm_update_allowed_actions(WClientWin *cwin);
 extern void netwm_delete_state(WClientWin *cwin);
 extern void netwm_set_active(WRegion *reg);
 extern char **netwm_get_name(WClientWin *cwin);
+extern void netwm_set_current_desktop(WRootWin *rw, char* activity, char* name);
+
 
 extern void netwm_handle_client_message(const XClientMessageEvent *ev);
 extern bool netwm_handle_property(WClientWin *cwin, const XPropertyEvent *ev);
